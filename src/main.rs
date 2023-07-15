@@ -1,19 +1,44 @@
-use std::process::Command;
-use sysinfo::{CpuExt, System, SystemExt};
 pub mod adapters;
+use prettytable::{Cell, format, Row, Table};
+use sysinfo::{ProcessExt, System, SystemExt};
 
-
-// use std::io::Write;
 fn main() {
-    // let mut sys = System::new();
+    let mut s = System::new_all();
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_NO_LINESEP_WITH_TITLE);
 
-    adapters::cursor::print_value();    //
-    // loop {
-    //     print_memory_usage(&mut sys);
-    //     std::thread::sleep(std::time::Duration::from_millis(1000));
-    //     clear_console();
-    // }
+    table.set_titles(Row::new(vec![
+        Cell::new("PID"),
+        Cell::new("Name"),
+        Cell::new("Memory (MB)"),
+        Cell::new("CPU"),
+    ]));
+
+    s.refresh_all();
+    let mut processes: Vec<_> = s.processes().iter().collect();
+    
+    // Sort by CPU usage in descending order
+    processes.sort_by(|a, b| (b.1.cpu_usage().partial_cmp(&a.1.cpu_usage())).unwrap());
+
+    // Limit to top 20 processes
+    processes.truncate(20);
+
+    for (pid, process) in processes {
+        let name = process.name();
+        let memory = process.memory() as f64 / 1024.0; // Convert to MB
+        let cpu_usage = process.cpu_usage() as f64;
+
+        table.add_row(Row::new(vec![
+            Cell::new(&pid.to_string()),
+            Cell::new(name),
+            Cell::new(&format!("{:.2}", memory)),
+            Cell::new(&format!("{:.2}", cpu_usage)),
+        ]));
+    }
+
+    table.printstd();
 }
+
 
 // fn print_memory_usage(sys: &mut System) {
 //     sys.refresh_memory();
