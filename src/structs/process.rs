@@ -1,11 +1,10 @@
-use sysinfo::{ProcessExt, System, SystemExt};
+use sysinfo::ProcessExt;
 
 pub struct Process {
     pub name: String,
     pub memory: String,
     pub cpu_usage: String,
 }
-
 
 impl Process {
     pub fn new(process: &sysinfo::Process) -> Self {

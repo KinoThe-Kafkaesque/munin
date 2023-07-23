@@ -39,7 +39,7 @@ pub fn get_disk_io(s: &System) -> String {
     let mut read_bytes: f64 = 0.0;
     let mut written_bytes: f64 = 0.0;
 
-    for (pid, process) in s.processes() {
+    for (_pid, process) in s.processes() {
         let disk_usage = process.disk_usage();
         read_bytes += disk_usage.read_bytes as f64;
         written_bytes += disk_usage.written_bytes as f64;

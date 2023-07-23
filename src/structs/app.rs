@@ -67,16 +67,6 @@ impl App {
         };
         self.state.select(Some(i));
     }
-    pub fn update_with_processes(&mut self, processes: Vec<Process>) {
-        self.processes = processes;
-
-        // If the selected index is no longer valid, select the last item
-        if let Some(selected) = self.state.selected() {
-            if selected >= self.processes.len() {
-                self.state.select(Some(self.processes.len() - 1));
-            }
-        }
-    }
 }
 pub fn run_app<B: Backend>(
     terminal: &mut Terminal<B>,
