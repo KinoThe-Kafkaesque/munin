@@ -1,4 +1,4 @@
-use sysinfo::{System, SystemExt , CpuExt, DiskExt, ProcessExt};
+use sysinfo::{CpuExt, DiskExt, ProcessExt, System, SystemExt};
 
 pub fn get_cpu_usage(sys: &mut System) -> String {
     sys.refresh_cpu();
@@ -46,10 +46,10 @@ pub fn get_disk_io(s: &System) -> String {
     }
 
     // Convert the total read and written disk usage from bytes to megabytes (MB)
-    let total_read_mb = read_bytes / 1_048_576.0;
-    let total_written_mb = written_bytes / 1_048_576.0;
+    let total_read_mb = read_bytes / 1024.0 / 1024.0;
+    let total_written_mb = written_bytes / 1024.0 / 1024.0;
     format!(
-        "Total Read: {:.2} MB Total Write: {:.2} MB",
+        "Disk Total Read: {:.2} MB Total Write: {:.2} MB",
         total_read_mb, total_written_mb
     )
 }

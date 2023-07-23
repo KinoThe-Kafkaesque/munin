@@ -49,7 +49,7 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App, sys: &mut System) {
     let normal_style = Style::default().bg(Color::Blue);
 
     // Prepare the header
-    let header_cells = ["Process", "Memory", "CPU"]
+    let header_cells = ["Process", "Memory", "CPU" , "Disk Read", "Disk Write"]
         .iter()
         .map(|h| Cell::from(*h).style(Style::default().fg(Color::Red)));
     let header = Row::new(header_cells)
@@ -64,6 +64,8 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App, sys: &mut System) {
             Cell::from(&process.name[..]),
             Cell::from(&process.memory[..]),
             Cell::from(&process.cpu_usage[..]),
+            Cell::from(&process.disk_read[..]),
+            Cell::from(&process.disk_write[..]),
         ];
         Row::new(cells).height(height as u16).bottom_margin(1)
     });
@@ -75,9 +77,11 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App, sys: &mut System) {
         .highlight_style(selected_style)
         .highlight_symbol(">> ")
         .widths(&[
-            Constraint::Percentage(50),
+            Constraint::Percentage(20),
             Constraint::Length(30),
             Constraint::Min(10),
+            Constraint::Length(30),
+            Constraint::Length(30),
         ]);
 
     f.render_stateful_widget(t, chunks[1], &mut app.state);

@@ -11,10 +11,9 @@ pub struct App {
 
 impl App {
     pub fn new(s: &mut System) -> App {
-        let mut system_processes: Vec<_> = s.processes().iter().collect();
+        let system_processes: Vec<_> = s.processes().iter().collect();
 
         // Sort by CPU usage in descending order
-        system_processes.sort_by(|a, b| (b.1.cpu_usage().partial_cmp(&a.1.cpu_usage())).unwrap());
 
         let mut processes = Vec::new();
 
