@@ -1,5 +1,5 @@
 use crate::{structs::process::Process, ui::ui::ui};
-use crossterm::event::{self, Event, KeyCode};
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use std::io;
 use sysinfo::{ProcessExt, System, SystemExt};
 use tui::{backend::Backend, widgets::TableState, Terminal};
@@ -74,30 +74,39 @@ pub fn run_app<B: Backend>(
     sleep_duration: std::time::Duration,
 ) -> io::Result<()> {
     let mut last_update = std::time::Instant::now();
+    let mut search_string: String = String::new();
 
     loop {
-        terminal.draw(|f| ui(f, app, system))?;
+        terminal.draw(|f| ui(f, app, system, &search_string))?;
 
         // Non-blocking read for event
         if event::poll(sleep_duration)? {
             match event::read()? {
-                Event::Key(key) => match key.code {
-                    KeyCode::Char('q') => return Ok(()),
-                    KeyCode::Down => app.next(),
-                    KeyCode::Up => app.previous(),
-                    _ => {}
-                },
+                Event::Key(KeyEvent {
+                    code, modifiers, ..
+                }) => {
+                    match (code, modifiers) {
+                        (KeyCode::Char(c), KeyModifiers::NONE) => {
+                            search_string.push(c);
+                        }
+                        (KeyCode::Backspace, KeyModifiers::NONE) => {
+                            search_string.pop();
+                        }
+                        _ => {}
+                    }
+                    match (code, modifiers) {
+                        (KeyCode::Char('q'), KeyModifiers::CONTROL) => return Ok(()),
+                        (KeyCode::Down, KeyModifiers::NONE) => app.next(),
+                        (KeyCode::Up, KeyModifiers::NONE) => app.previous(),
+                        _ => {}
+                    }
+                }
                 _ => {}
             }
         }
 
-        // Only refresh system data if enough time has passed
         if last_update.elapsed() >= std::time::Duration::from_secs(1) {
             system.refresh_all();
-
-            // Wait a bit to allow the system to update
-
-            // Update the app state after sleep_duration and the small sleep
             app.update(system);
 
             last_update = std::time::Instant::now();

@@ -3,7 +3,8 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Cell, Paragraph, Row, Table},
+    text::Spans,
+    widgets::{Block, Borders, Cell, Paragraph, Row, Table, Wrap},
     Frame,
 };
 
@@ -11,14 +12,16 @@ use crate::{
     structs::app::App,
     utils::system_stats::{get_cpu_usage, get_disk_io, get_disk_usage, get_memory_usage},
 };
-pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App, sys: &mut System) {
+
+pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App, sys: &mut System, search_string: &str) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(2)
         .constraints(
             [
                 Constraint::Percentage(25), // For Stats
-                Constraint::Min(0),         // For the Table
+                Constraint::Percentage(70), // For the Table
+                Constraint::Percentage(5),  // For the Search Bar
             ]
             .as_ref(),
         )
@@ -49,7 +52,7 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App, sys: &mut System) {
     let normal_style = Style::default().bg(Color::Blue);
 
     // Prepare the header
-    let header_cells = ["Process", "Memory", "CPU" , "Disk Read", "Disk Write"]
+    let header_cells = ["Process", "Memory", "CPU", "Disk Read", "Disk Write"]
         .iter()
         .map(|h| Cell::from(*h).style(Style::default().fg(Color::Red)));
     let header = Row::new(header_cells)
@@ -58,17 +61,26 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App, sys: &mut System) {
         .bottom_margin(1);
 
     // Prepare the rows
-    let rows = app.processes.iter().map(|process| {
-        let height = 1;
-        let cells = vec![
-            Cell::from(&process.name[..]),
-            Cell::from(&process.memory[..]),
-            Cell::from(&process.cpu_usage[..]),
-            Cell::from(&process.disk_read[..]),
-            Cell::from(&process.disk_write[..]),
-        ];
-        Row::new(cells).height(height as u16).bottom_margin(1)
-    });
+    let rows = app
+        .processes
+        .iter()
+        .filter(|process| {
+            process
+                .name
+                .to_lowercase()
+                .contains(&search_string.to_lowercase())
+        })
+        .map(|process| {
+            let height = 1;
+            let cells = vec![
+                Cell::from(&process.name[..]),
+                Cell::from(&process.memory[..]),
+                Cell::from(&process.cpu_usage[..]),
+                Cell::from(&process.disk_read[..]),
+                Cell::from(&process.disk_write[..]),
+            ];
+            Row::new(cells).height(height as u16).bottom_margin(1)
+        });
 
     // Draw the table
     let t = Table::new(rows)
@@ -83,6 +95,12 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App, sys: &mut System) {
             Constraint::Length(30),
             Constraint::Length(30),
         ]);
+    // This would be somewhere in your event loop
 
     f.render_stateful_widget(t, chunks[1], &mut app.state);
+    // Render the search bar
+    let block = Block::default().title("Search").borders(Borders::ALL);
+    let text = vec![Spans::from(search_string)];
+    let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
+    f.render_widget(paragraph, chunks[2]);
 }
